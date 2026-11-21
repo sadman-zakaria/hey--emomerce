@@ -62,11 +62,11 @@ function nextOrderNumber(orders: Order[]) {
 
 function createStore() {
   const state = {
-    products: [...seedProducts] as Product[],
-    categories: [...seedCategories] as Category[],
+    products: [] as Product[],
+    categories: [] as Category[],
     orders: [] as Order[],
     users: [] as User[],
-    banners: [...seedBanners] as Banner[],
+    banners: [] as Banner[],
     media: [] as MediaItem[],
     customerOrders: [] as Order[],
     cart: [] as CartItem[],
