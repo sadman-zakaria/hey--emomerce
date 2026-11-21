@@ -54,6 +54,7 @@ frontend demo. In production, always set `MONGODB_URI`, `JWT_SECRET`,
 | `ADMIN_EMAIL` | `tanjinairin62@gmail.com` | Login email for the seeded admin |
 | `ADMIN_PASSWORD` | `tanjina1234` | Initial password; used only when the admin is seeded |
 | `CORS_ORIGINS` | localhost origins | Comma-separated allowlist, or `*` |
+| `FRONTEND_URL` | empty | Public storefront origin; added to the CORS allowlist automatically |
 | `SEED_ON_START` | `true` | Set to `false` to skip demo seeding |
 
 The admin account is created on first boot. If the account already exists, the
@@ -164,7 +165,8 @@ stock) return `409`; authentication and authorization failures return `401`/`403
    Express app exported from `api/index.js`.
 4. Add the environment variables from the table above. At minimum:
    `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-   `CORS_ORIGINS=https://your-frontend-domain`.
+   `CORS_ORIGINS=https://your-frontend-domain`, and
+   `FRONTEND_URL=https://your-frontend-domain`.
 5. Deploy and verify `https://<project>.vercel.app/api/health` reports
    `"mode": "mongo"`.
 

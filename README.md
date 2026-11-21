@@ -123,8 +123,8 @@ Backend (`backend/`):
 The frontend and API can be deployed separately or on the same host.
 
 1. Deploy `backend/` to Vercel or Netlify using the included configs, and set at
-   least `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and
-   `CORS_ORIGINS`. Full steps: [backend/README.md](backend/README.md).
+   least `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
+   `CORS_ORIGINS`, and `FRONTEND_URL`. Full steps: [backend/README.md](backend/README.md).
 2. Build and deploy the frontend with `VITE_API_URL` set to the public API URL,
    for example `https://maison-api.vercel.app/api`.
 3. Add the frontend origin to `CORS_ORIGINS` on the API.

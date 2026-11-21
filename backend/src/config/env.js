@@ -10,6 +10,16 @@ function int(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+const configuredCorsOrigins = (
+  process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:3000,http://localhost:8080"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const frontendUrl = process.env.FRONTEND_URL?.trim();
+if (frontendUrl) configuredCorsOrigins.push(frontendUrl);
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   isProduction: process.env.NODE_ENV === "production",
@@ -22,10 +32,8 @@ export const env = {
     email: (process.env.ADMIN_EMAIL ?? "tanjinairin62@gmail.com").toLowerCase(),
     password: process.env.ADMIN_PASSWORD ?? "tanjina1234",
   },
-  corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:3000,http://localhost:8080")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  frontendUrl: frontendUrl ?? "",
+  corsOrigins: [...new Set(configuredCorsOrigins)],
   seedOnStart: bool(process.env.SEED_ON_START, true),
 };
 

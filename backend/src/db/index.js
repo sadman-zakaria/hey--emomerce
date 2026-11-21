@@ -16,36 +16,7 @@ let repositoryPromise;
 
 const SEED_MARKER = "seed:initial";
 
-async function seed(repo) {
-  if (!env.seedOnStart) return;
-  if ((await repo.getMeta(SEED_MARKER)) === "done") return;
-
-  if ((await repo.countProducts()) === 0) {
-    for (const product of seedProducts) await repo.createProduct(product);
-    console.log(`[seed] inserted ${seedProducts.length} products`);
-  }
-
-  if ((await repo.listCategories()).length === 0) {
-    for (const category of seedCategories) await repo.createCategory(category);
-    console.log(`[seed] inserted ${seedCategories.length} categories`);
-  }
-
-  if ((await repo.listBanners()).length === 0) {
-    for (const banner of seedBanners) await repo.createBanner(banner);
-    console.log(`[seed] inserted ${seedBanners.length} banners`);
-  }
-
-  if ((await repo.countOrders()) === 0) {
-    for (const order of seedOrders) await repo.createOrderRecord(order);
-    await repo.ensureOrderCounter(1005);
-    console.log(`[seed] inserted ${seedOrders.length} orders`);
-  }
-
-  if ((await repo.countUsers()) === 0) {
-    for (const user of seedUsers) await repo.createUser(user);
-    console.log(`[seed] inserted ${seedUsers.length} customers`);
-  }
-
+async function ensureAdmin(repo) {
   const admin = await repo.findUserForAuth(env.admin.email);
   if (!admin) {
     const passwordHash = await bcrypt.hash(env.admin.password, 10);
@@ -67,10 +38,47 @@ async function seed(repo) {
     await repo.updateUser(admin.id, { passwordHash });
     console.log(`[seed] set password for admin account ${env.admin.email}`);
   }
+}
 
-  // Mark the demo seed as complete so deleting demo products does not bring
-  // them back on the next serverless cold start.
-  await repo.setMeta(SEED_MARKER, "done");
+async function seed(repo) {
+  if (!env.seedOnStart) return;
+
+  // The demo catalogue is inserted once. The marker lets you delete demo records
+  // later without having them recreated on the next restart or cold start.
+  const alreadySeeded = (await repo.getMeta(SEED_MARKER)) === "done";
+  if (!alreadySeeded) {
+    if ((await repo.countProducts()) === 0) {
+      for (const product of seedProducts) await repo.createProduct(product);
+      console.log(`[seed] inserted ${seedProducts.length} products`);
+    }
+
+    if ((await repo.listCategories()).length === 0) {
+      for (const category of seedCategories) await repo.createCategory(category);
+      console.log(`[seed] inserted ${seedCategories.length} categories`);
+    }
+
+    if ((await repo.listBanners()).length === 0) {
+      for (const banner of seedBanners) await repo.createBanner(banner);
+      console.log(`[seed] inserted ${seedBanners.length} banners`);
+    }
+
+    if ((await repo.countOrders()) === 0) {
+      for (const order of seedOrders) await repo.createOrderRecord(order);
+      await repo.ensureOrderCounter(1005);
+      console.log(`[seed] inserted ${seedOrders.length} orders`);
+    }
+
+    if ((await repo.countUsers()) === 0) {
+      for (const user of seedUsers) await repo.createUser(user);
+      console.log(`[seed] inserted ${seedUsers.length} customers`);
+    }
+
+    await repo.setMeta(SEED_MARKER, "done");
+  }
+
+  // Always make sure the configured admin exists, even when the demo catalogue
+  // was seeded earlier or the admin account was removed.
+  await ensureAdmin(repo);
 }
 
 async function init() {

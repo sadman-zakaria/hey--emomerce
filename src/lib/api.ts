@@ -44,10 +44,10 @@ export type AdminStats = {
 };
 
 const env = import.meta.env;
+// VITE_API_URL should point at the API root, e.g. http://localhost:4000/api.
 const configuredBase = env["VITE_API_URL"] as string | undefined;
-const fallbackBase = env.DEV ? "http://localhost:4000/api" : "/api";
 
-export const API_BASE = (configuredBase?.trim() || fallbackBase).replace(/\/+$/, "");
+export const API_BASE = (configuredBase?.trim() || "http://localhost:4000/api").replace(/\/+$/, "");
 
 const ADMIN_TOKEN_KEY = "maison.admin.token";
 const USER_TOKEN_KEY = "maison.user.token";
