@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maison API</title>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        max-width: 720px;
+        margin: 48px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+        color: #222;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      h1 {
+        margin-bottom: 4px;
+      }
+      .muted {
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Maison API</h1>
+    <p class="muted">Node.js + Express backend for the Maison store.</p>
+    <p>Health check: <a href="/api/health"><code>/api/health</code></a></p>
+    <p>
+      Storefront: <code>/api/products</code>, <code>/api/categories</code>,
+      <code>/api/banners</code>, <code>/api/bootstrap</code>, <code>POST /api/orders</code>
+    </p>
+    <p>Admin login: <code>POST /api/auth/login</code></p>
+    <p class="muted">See the repository README for deployment and environment variables.</p>
+  </body>
+</html>
