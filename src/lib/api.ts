@@ -44,7 +44,6 @@ export type AdminStats = {
 };
 
 const env = import.meta.env;
-// VITE_API_URL should point at the API root, e.g. http://localhost:4000/api.
 const configuredBase = env["VITE_API_URL"] as string | undefined;
 
 export const API_BASE = (configuredBase?.trim() || "http://localhost:4000/api").replace(/\/+$/, "");
@@ -274,6 +273,8 @@ export const api = {
           method: "PATCH",
           body: { status },
         }),
+      remove: (id: string) =>
+        request<{ ok: boolean }>(`/admin/orders/${id}`, { method: "DELETE" }),
     },
 
     users: {

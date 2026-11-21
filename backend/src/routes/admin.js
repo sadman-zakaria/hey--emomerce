@@ -161,6 +161,25 @@ export function adminRouter() {
     res.json(await setOrderStatus(req.repo, req.params.id, status));
   });
 
+  router.delete("/orders/:id", async (req, res) => {
+    if (typeof req.repo.deleteOrder === "function") {
+      const deleted = await req.repo.deleteOrder(req.params.id);
+      if (!deleted) throw new HttpError(404, "Order not found");
+      return res.json({ ok: true });
+    }
+    const existing = await req.repo.getOrderById(req.params.id);
+    if (!existing) throw new HttpError(404, "Order not found");
+    if (Array.isArray(req.repo.orders)) {
+      req.repo.orders = req.repo.orders.filter((o) => o.id !== req.params.id);
+    } else {
+      const mongoose = (await import("mongoose")).default;
+      if (mongoose.models.Order) {
+        await mongoose.models.Order.findByIdAndDelete(req.params.id);
+      }
+    }
+    res.json({ ok: true });
+  });
+
   // ----------------------------------------------------------------------- users
   router.get("/users", async (req, res) => {
     res.json(

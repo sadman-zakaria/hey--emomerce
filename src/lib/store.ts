@@ -64,8 +64,8 @@ function createStore() {
   const state = {
     products: [...seedProducts] as Product[],
     categories: [...seedCategories] as Category[],
-    orders: [...seedOrders] as Order[],
-    users: [...seedUsers] as User[],
+    orders: [] as Order[],
+    users: [] as User[],
     banners: [...seedBanners] as Banner[],
     media: [] as MediaItem[],
     customerOrders: [] as Order[],
@@ -99,8 +99,6 @@ function createStore() {
   let userAuthPromise: Promise<User | null> | null = null;
 
   const isLive = () => state.mode === "online" && state.apiReachable && Boolean(getToken());
-  const isCustomerLive = () =>
-    state.mode === "online" && state.apiReachable && Boolean(getUserToken());
 
   async function refreshAdminData() {
     if (!state.apiReachable || !getToken()) return;
@@ -271,6 +269,8 @@ function createStore() {
     setToken(null);
     setOfflineSession(false);
     state.adminUser = null;
+    state.orders = [];
+    state.users = [];
     state.authReady = true;
     bump();
     if (hadOnlineSession) {
@@ -555,6 +555,13 @@ function createStore() {
       }
       return null;
     },
+    async deleteOrder(id: string) {
+      if (isLive()) {
+        await api.admin.orders.remove(id);
+      }
+      state.orders = state.orders.filter((order) => order.id !== id);
+      bump();
+    },
 
     // ----------------------------------------------------------------------- users
     async addUser(input: UserInput) {
@@ -722,11 +729,14 @@ function createStore() {
     // ----------------------------------------------------------------------- stats
     get totalRevenue() {
       return state.orders
-        .filter((order) => order.status !== "cancelled")
+        .filter((order) => order.status === "delivered" || order.paymentStatus === "paid")
         .reduce((sum, order) => sum + order.total, 0);
     },
     get totalOrders() {
       return state.orders.length;
+    },
+    get pendingOrdersCount() {
+      return state.orders.filter((order) => order.status === "pending").length;
     },
     get totalProducts() {
       return state.products.length;

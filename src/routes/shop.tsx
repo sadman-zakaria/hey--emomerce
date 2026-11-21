@@ -47,7 +47,7 @@ const DEFAULTS: ShopSearch = {
   featured: false,
   tags: [],
   minPrice: 0,
-  maxPrice: 1000,
+  maxPrice: undefined,
   sort: "featured",
   page: 1,
 };
@@ -96,17 +96,22 @@ function ShopPage() {
   const navigate = Route.useNavigate();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  const catalogMaxPrice = useMemo(() => {
+    const highest = store.products.reduce((max, p) => Math.max(max, p.price), 1000);
+    return Math.ceil(highest / 100) * 100;
+  }, [store.products]);
+
   const q = search.q ?? "";
   const category = search.category ?? "";
   const featured = search.featured ?? false;
   const tags = search.tags ?? [];
   const minPrice = search.minPrice ?? 0;
-  const maxPrice = search.maxPrice ?? 1000;
+  const maxPrice = search.maxPrice ?? catalogMaxPrice;
   const sort = search.sort ?? "featured";
   const page = search.page ?? 1;
 
   const filtered = useMemo(() => {
-    let list = store.products.filter((p) => p.status === "active");
+    let list = store.products.filter((p) => (p.status ?? "active").toLowerCase() === "active");
 
     if (q) {
       const ql = q.toLowerCase();
@@ -161,7 +166,12 @@ function ShopPage() {
   };
 
   const hasFilters =
-    !!q || !!category || featured || tags.length > 0 || minPrice > 0 || maxPrice < 1000;
+    !!q ||
+    !!category ||
+    featured ||
+    tags.length > 0 ||
+    minPrice > 0 ||
+    (search.maxPrice !== undefined && search.maxPrice < catalogMaxPrice);
 
   const FilterContent = () => (
     <div className="space-y-8">
@@ -171,7 +181,7 @@ function ShopPage() {
           <Slider
             defaultValue={[minPrice, maxPrice]}
             min={0}
-            max={1000}
+            max={catalogMaxPrice}
             step={10}
             onValueCommit={(value) => updateSearch({ minPrice: value[0], maxPrice: value[1] })}
             className="mb-3"

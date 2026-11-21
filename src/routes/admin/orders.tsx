@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, Eye } from "lucide-react";
-import { store } from "@/lib/store";
+import { Search, Eye, Trash2 } from "lucide-react";
+import { useStore } from "@/lib/use-store";
 import type { Order } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/orders")({
@@ -44,9 +50,11 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
 };
 
 function AdminOrders() {
+  const store = useStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewing, setViewing] = useState<Order | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
 
   const filtered = store.orders.filter((o) => {
     const matchSearch =
@@ -71,12 +79,24 @@ function AdminOrders() {
     }
   };
 
+  const handleDeleteOrder = async () => {
+    if (!deleteTarget) return;
+    try {
+      await store.deleteOrder(deleteTarget.id);
+      toast.success(`Order ${deleteTarget.orderNumber} deleted`);
+      if (viewing?.id === deleteTarget.id) setViewing(null);
+      setDeleteTarget(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not delete order");
+    }
+  };
+
   return (
     <div className="p-6 md:p-8">
       <div>
         <h1 className="font-display text-3xl font-semibold text-foreground">Orders</h1>
         <p className="mt-1 text-muted-foreground">
-          {store.totalOrders} orders · see who ordered what
+          {store.totalOrders} orders · {store.pendingOrdersCount} pending
         </p>
       </div>
 
@@ -120,47 +140,66 @@ function AdminOrders() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((o) => (
-              <TableRow key={o.id}>
-                <TableCell className="font-medium">{o.orderNumber}</TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium text-foreground">{o.customerName}</div>
-                    <div className="text-xs text-muted-foreground">{o.customerEmail}</div>
-                  </div>
-                </TableCell>
-                <TableCell>{o.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
-                <TableCell>${o.total}</TableCell>
-                <TableCell className="text-muted-foreground">{o.createdAt}</TableCell>
-                <TableCell>
-                  <Badge variant={o.paymentStatus === "paid" ? "default" : "secondary"}>
-                    {o.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Select
-                    value={o.status}
-                    onValueChange={(v) => handleStatusChange(o.id, v as Order["status"])}
-                  >
-                    <SelectTrigger className="h-8 w-32 capitalize">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((s) => (
-                        <SelectItem key={s} value={s} className="capitalize">
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => setViewing(o)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                  No orders found.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filtered.map((o) => (
+                <TableRow key={o.id}>
+                  <TableCell className="font-medium">{o.orderNumber}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium text-foreground">{o.customerName}</div>
+                      <div className="text-xs text-muted-foreground">{o.customerEmail}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{o.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
+                  <TableCell>${o.total}</TableCell>
+                  <TableCell className="text-muted-foreground">{o.createdAt}</TableCell>
+                  <TableCell>
+                    <Badge variant={o.paymentStatus === "paid" ? "default" : "secondary"}>
+                      {o.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={o.status}
+                      onValueChange={(v) => handleStatusChange(o.id, v as Order["status"])}
+                    >
+                      <SelectTrigger className="h-8 w-32 capitalize">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((s) => (
+                          <SelectItem key={s} value={s} className="capitalize">
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setViewing(o)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => setDeleteTarget(o)}
+                        title="Delete order"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -267,6 +306,27 @@ function AdminOrders() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete order confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete order?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Permanently delete order <strong>{deleteTarget?.orderNumber}</strong>? This cannot be
+            undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteOrder}>
+              Delete order
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

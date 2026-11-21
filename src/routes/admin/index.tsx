@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, TrendingUp } from "lucide-react";
-import { store } from "@/lib/store";
+import { useStore } from "@/lib/use-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -17,6 +17,7 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function AdminDashboard() {
+  const store = useStore();
   const recentOrders = store.orders.slice(0, 5);
   const lowStock = store.lowStockProducts;
   const statusColors: Record<string, string> = {
@@ -31,12 +32,31 @@ function AdminDashboard() {
     {
       label: "Total Revenue",
       value: `$${store.totalRevenue.toLocaleString()}`,
+      sub: "Paid & delivered orders",
       icon: DollarSign,
       color: "text-primary",
     },
-    { label: "Total Orders", value: store.totalOrders, icon: ShoppingCart, color: "text-primary" },
-    { label: "Products", value: store.totalProducts, icon: Package, color: "text-primary" },
-    { label: "Customers", value: store.totalUsers, icon: Users, color: "text-primary" },
+    {
+      label: "Total Orders",
+      value: store.totalOrders,
+      sub: `${store.pendingOrdersCount} pending`,
+      icon: ShoppingCart,
+      color: "text-primary",
+    },
+    {
+      label: "Products",
+      value: store.totalProducts,
+      sub: "Active catalog",
+      icon: Package,
+      color: "text-primary",
+    },
+    {
+      label: "Customers",
+      value: store.totalCustomers,
+      sub: "Registered buyers",
+      icon: Users,
+      color: "text-primary",
+    },
   ];
 
   return (
@@ -58,6 +78,7 @@ function AdminDashboard() {
               <div className="font-display text-2xl font-semibold text-foreground">
                 {stat.value}
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">{stat.sub}</p>
             </CardContent>
           </Card>
         ))}
@@ -70,32 +91,36 @@ function AdminDashboard() {
             <CardTitle className="font-display">Recent orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                    <TableCell>{order.customerName}</TableCell>
-                    <TableCell>${order.total}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[order.status]}`}
-                      >
-                        {order.status}
-                      </span>
-                    </TableCell>
+            {recentOrders.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No orders yet.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                      <TableCell>{order.customerName}</TableCell>
+                      <TableCell>${order.total}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[order.status]}`}
+                        >
+                          {order.status}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
